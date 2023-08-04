@@ -1,6 +1,9 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/lib/use/ws';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -23,19 +26,41 @@ const resolvers = {
 const app = express();
 const httpServer = http.createServer(app);
 
+const wsServer = new WebSocketServer({
+  server: httpServer,
+  path: '/graphql',
+});
+
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+const serverCleanup = useServer({ schema }, wsServer);
+
 // Set up Apollo Server
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  schema,
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    {
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            await serverCleanup.dispose();
+          },
+        };
+      },
+    },
+  ],
 });
 await server.start();
 
 app.use(
+  '/graphql',
   cors(),
   bodyParser.json(),
   expressMiddleware(server),
 );
 
-await new Promise((resolve) => httpServer.listen({ port: 5000 }, resolve));
-console.log(`🚀 Server ready at http://localhost:5000`);
+const PORT = 4000;
+
+await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
+console.log(`🚀 Server ready at http://localhost:${PORT}`);
