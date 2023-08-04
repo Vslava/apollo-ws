@@ -4,14 +4,14 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
-import { PubSub } from 'graphql-subscriptions';
+import { PubSub, withFilter } from 'graphql-subscriptions';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import util from 'util';
+// import util from 'util';
 
-const sleep = util.promisify(setTimeout);
+// const sleep = util.promisify(setTimeout);
 
 // The GraphQL schema
 const typeDefs = `#graphql
@@ -22,7 +22,11 @@ const typeDefs = `#graphql
 
   type Subscription {
     hello: String
-    postCreated: Post
+    postCreated(authorsToFilter: [String!]): Post
+  }
+
+  type Mutation {
+    createPost(author: String!, comment: String): Boolean
   }
 
   # It is necessary.
@@ -46,9 +50,21 @@ const resolvers = {
     },
 
     postCreated: {
-      subscribe: () => pubsub.asyncIterator(['POST_CREATED']),
+      subscribe: withFilter(
+        () => pubsub.asyncIterator(['POST_CREATED']),
+        (payload, variables) => {
+          const authorInPayload = payload.postCreated.author;
+          return !variables?.authorsToFilter?.includes(authorInPayload);
+        },
+      ),
     },
-  }
+  },
+  Mutation: {
+    createPost(parent, args) {
+      pubsub.publish('POST_CREATED', { postCreated: args });
+      console.log('createPost: ', JSON.stringify(args));
+    },
+  },
 };
 
 const app = express();
@@ -93,13 +109,13 @@ const PORT = 4000;
 await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
 console.log(`🚀 Server ready at http://localhost:${PORT}`);
 
-while(true) {
-  pubsub.publish('POST_CREATED', {
-    postCreated: {
-      author: 'Ali Baba',
-      comment: 'Open sesame',
-    },
-  });
+// while(true) {
+//   pubsub.publish('POST_CREATED', {
+//     postCreated: {
+//       author: 'Ali Baba',
+//       comment: 'Open sesame',
+//     },
+//   });
 
-  await sleep(3000);
-}
+//   await sleep(3000);
+// }
