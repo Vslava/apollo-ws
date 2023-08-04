@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "start": "node ./server.mjs"
+  },
   "dependencies": {
     "@apollo/server": "4.9.0",
     "body-parser": "1.20.2",
