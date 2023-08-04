@@ -2,5 +2,9 @@
   "name": "apollo-ws",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@apollo/server": "4.9.0",
+    "graphql": "16.7.1"
+  }
 }
