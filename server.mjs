@@ -9,6 +9,9 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import util from 'util';
+
+const sleep = util.promisify(setTimeout);
 
 const pubsub = new PubSub();
 
@@ -89,3 +92,14 @@ const PORT = 4000;
 
 await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
 console.log(`🚀 Server ready at http://localhost:${PORT}`);
+
+while(true) {
+  pubsub.publish('POST_CREATED', {
+    postCreated: {
+      author: 'Ali Baba',
+      comment: 'Open sesame',
+    },
+  });
+
+  await sleep(3000);
+}
