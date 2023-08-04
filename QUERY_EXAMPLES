@@ -1,0 +1,10 @@
+mutation {
+  createPost(author: "bill", comment: "test")
+}
+
+subscription {
+  postCreated(authorsToFilter: ["bill"]) {
+    author
+    comment
+  }
+}
