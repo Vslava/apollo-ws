@@ -4,23 +4,48 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
+import { PubSub } from 'graphql-subscriptions';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 
+const pubsub = new PubSub();
+
 // The GraphQL schema
 const typeDefs = `#graphql
+  type Post {
+    author: String
+    comment: String
+  }
+
   type Subscription {
+    hello: String
     postCreated: Post
+  }
+
+  # It is necessary.
+  # Apollo doesn't run without it.
+  type Query {
+    fake: Boolean
   }
 `;
 
 // A map of functions which return data for the schema.
 const resolvers = {
-  Query: {
-    hello: () => 'world',
-  },
+  Subscription: {
+    hello: {
+      subscribe: async function* () {
+        for await (const word of ['Hello', 'Bonjour', 'Ciao']) {
+          yield { hello: word };
+        }
+      },
+    },
+
+    postCreated: {
+      subscribe: () => pubsub.asyncIterator(['POST_CREATED']),
+    },
+  }
 };
 
 const app = express();
