@@ -13,8 +13,6 @@ import util from 'util';
 
 const sleep = util.promisify(setTimeout);
 
-const pubsub = new PubSub();
-
 // The GraphQL schema
 const typeDefs = `#graphql
   type Post {
@@ -33,6 +31,8 @@ const typeDefs = `#graphql
     fake: Boolean
   }
 `;
+
+const pubsub = new PubSub();
 
 // A map of functions which return data for the schema.
 const resolvers = {
