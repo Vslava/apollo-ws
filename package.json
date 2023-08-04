@@ -5,6 +5,8 @@
   "license": "MIT",
   "dependencies": {
     "@apollo/server": "4.9.0",
+    "body-parser": "1.20.2",
+    "cors": "2.8.5",
     "graphql": "16.7.1"
   }
 }
