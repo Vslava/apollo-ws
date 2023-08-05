@@ -39,9 +39,20 @@ const logger = ConsoleLogger.create('PUBSUB', {
   mode: 'short',
 });
 
+// We can have several copies of the same server.
+// Events of a subscription inside these copies have to be sent to
+// each copy. BUT... if there is the same subscription on other servers and
+// their copies, these events mustn't be sent there. To do it, it is necessary
+// to transform the trigger name to make it unique on the current server.
+// triggerTransform is used to modify the trigger name while trying to subscribe.
+const triggerTransform = (trigger) => {
+  return trigger;
+};
+
 const pubsub = new AmqpPubSub({
   logger,
   config: 'amqp://localhost',
+  triggerTransform,
 });
 
 // A map of functions which return data for the schema.
