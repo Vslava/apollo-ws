@@ -4,7 +4,9 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
-import { PubSub, withFilter } from 'graphql-subscriptions';
+import { withFilter } from 'graphql-subscriptions';
+import { AmqpPubSub } from 'graphql-rabbitmq-subscriptions';
+import { ConsoleLogger } from '@cdm-logger/server'
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -32,7 +34,15 @@ const typeDefs = `#graphql
   }
 `;
 
-const pubsub = new PubSub();
+const logger = ConsoleLogger.create('PUBSUB', {
+  level: 'info',
+  mode: 'short',
+});
+
+const pubsub = new AmqpPubSub({
+  logger,
+  config: 'amqp://localhost',
+});
 
 // A map of functions which return data for the schema.
 const resolvers = {
