@@ -100,7 +100,7 @@ app.use(
   expressMiddleware(server),
 );
 
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
 await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
 console.log(`🚀 Server ready at http://localhost:${PORT}`);
