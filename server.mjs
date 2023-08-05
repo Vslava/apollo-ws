@@ -35,7 +35,7 @@ const typeDefs = `#graphql
 `;
 
 const logger = ConsoleLogger.create('PUBSUB', {
-  level: 'info',
+  level: 'debug',
   mode: 'short',
 });
 
