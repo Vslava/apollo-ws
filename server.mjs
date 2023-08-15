@@ -4,7 +4,9 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
-import { PubSub, withFilter } from 'graphql-subscriptions';
+import { withFilter } from 'graphql-subscriptions';
+import { AMQPPubSub } from 'graphql-amqp-subscriptions';
+import amqp from 'amqplib';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -32,7 +34,15 @@ const typeDefs = `#graphql
   }
 `;
 
-const pubsub = new PubSub();
+const pubsub = await amqp.connect('amqp://localhost').then(conn => {
+  console.log('connected');
+
+  return new AMQPPubSub({
+    connection: conn
+  });
+}).catch(err => {
+  console.error(err);
+});
 
 // A map of functions which return data for the schema.
 const resolvers = {
@@ -50,7 +60,7 @@ const resolvers = {
         () => pubsub.asyncIterator(['POST_CREATED']),
         (payload, variables) => {
           const authorInPayload = payload.postCreated.author;
-          return !variables?.authorsToFilter?.includes(authorInPayload);
+          return variables?.authorsToFilter?.includes(authorInPayload);
         },
       ),
     },
